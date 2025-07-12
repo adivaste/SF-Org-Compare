@@ -112,7 +112,7 @@ export function GitDiffViewer({
   }, [options.enableExtendData]);
 
   return (
-    <div className={cn("h-full w-full overflow-auto pb-8", className)}>
+    <div className={cn("h-full w-full overflow-auto pb-8 custom-scrollbar", className)}>
       <DiffView
         diffFile={diffFile}
         diffViewFontSize={options.fontSize || 14}

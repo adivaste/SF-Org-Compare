@@ -203,7 +203,11 @@ function FileTree({
   onSelect: (path: string) => void;
   selectedPath?: string;
 }) {
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
+    // Load expanded folders from localStorage
+    const saved = localStorage.getItem('expandedFolders');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [searchTerm, setSearchTerm] = useState('');
 
   const toggleFolder = (path: string) => {
@@ -214,6 +218,9 @@ function FileTree({
       newExpanded.add(path);
     }
     setExpandedFolders(newExpanded);
+    
+    // Save to localStorage
+    localStorage.setItem('expandedFolders', JSON.stringify(Array.from(newExpanded)));
   };
 
   const getFileIcon = (fileName: string) => {
@@ -250,6 +257,21 @@ function FileTree({
   };
 
   const filteredData = filterNodes(data);
+
+  const highlightText = (text: string, searchTerm: string) => {
+    if (!searchTerm) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-yellow-200 text-yellow-900 font-medium px-0.5 rounded">
+          {part}
+        </span>
+      ) : part
+    );
+  };
 
   const renderNode = (node: FileNode, level: number = 0) => {
     const isExpanded = expandedFolders.has(node.path);
@@ -293,7 +315,7 @@ function FileTree({
             "truncate flex-1 text-left",
             level > 0 && "font-normal"
           )}>
-            {node.name}
+            {highlightText(node.name, searchTerm)}
           </span>
           {node.status && (
             <div className={cn(
@@ -310,18 +332,20 @@ function FileTree({
   };
 
   return (
-    <div className="py-1 space-y-0.5 h-full overflow-y-auto">
-      <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-muted/30 z-10">
-        Files
-      </div>
-      <div className="px-3 pb-2">
-        <input
-          type="text"
-          placeholder="Search files..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-7 px-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-        />
+    <div className="pb-1 space-y-0.5 h-full overflow-y-auto custom-scrollbar">
+      <div className="sticky top-0 sticky-header z-20 pb-2">
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Files
+        </div>
+        <div className="px-3">
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-7 px-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+        </div>
       </div>
       {filteredData.map(node => renderNode(node))}
     </div>
@@ -426,62 +450,47 @@ function DiffSettings({ settings, onChange }: {
 }
 
 function App() {
-  const [selectedFile, setSelectedFile] = useState<string>();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string | undefined>(() => {
+    // Load selected file from localStorage
+    const saved = localStorage.getItem('selectedFile');
+    return saved || undefined;
+  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    // Load sidebar state from localStorage
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [fileContent, setFileContent] = useState<FileContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [settings, setSettings] = useState<DiffSettings>({
-    fontSize: 14,
-    showDiffOnly: false,
-    extraLines: 3,
-    renderSideBySide: false,
-    enableSyntaxHighlight: true,
-    wrapLines: false,
-    theme: 'light',
-    enableWidgets: false,
-    enableExtendData: false
+  const [settings, setSettings] = useState<DiffSettings>(() => {
+    // Load settings from localStorage
+    const saved = localStorage.getItem('diffSettings');
+    return saved ? JSON.parse(saved) : {
+      fontSize: 14,
+      showDiffOnly: false,
+      extraLines: 3,
+      renderSideBySide: false,
+      enableSyntaxHighlight: true,
+      wrapLines: false,
+      theme: 'light',
+      enableWidgets: false,
+      enableExtendData: false
+    };
   });
 
   const handleSettingChange = (key: keyof DiffSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings(prev => {
+      const newSettings = { ...prev, [key]: value };
+      // Save to localStorage
+      localStorage.setItem('diffSettings', JSON.stringify(newSettings));
+      return newSettings;
+    });
   };
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl/Cmd + K: Focus search
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        const searchInput = document.querySelector('input[placeholder="Search files..."]') as HTMLInputElement;
-        if (searchInput) {
-          searchInput.focus();
-        }
-      }
-      
-      // Ctrl/Cmd + B: Toggle sidebar (desktop only)
-      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
-        event.preventDefault();
-        if (window.innerWidth >= 768) { // md breakpoint
-          setIsSidebarCollapsed(prev => !prev);
-        }
-      }
-      
-      // Ctrl/Cmd + ,: Open settings
-      if ((event.ctrlKey || event.metaKey) && event.key === ',') {
-        event.preventDefault();
-        const settingsButton = document.querySelector('[data-settings-trigger]') as HTMLButtonElement;
-        if (settingsButton) {
-          settingsButton.click();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
+  // Save selected file to localStorage
   const handleFileSelect = async (path: string) => {
     setSelectedFile(path);
+    localStorage.setItem('selectedFile', path);
     setIsLoading(true);
     
     // TODO: Replace this with actual API call to fetch file contents
@@ -731,6 +740,60 @@ export default class AccountList extends LightningElement {
     }, 500);
   };
 
+  // Handle sidebar collapse with persistence
+  const handleSidebarCollapse = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Ctrl/Cmd + K: Focus search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search files..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+      }
+      
+      // Ctrl/Cmd + B: Toggle sidebar (desktop only)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault();
+        if (window.innerWidth >= 768) { // md breakpoint
+          handleSidebarCollapse(!isSidebarCollapsed);
+        }
+      }
+      
+      // Ctrl/Cmd + ,: Open settings
+      if ((event.ctrlKey || event.metaKey) && event.key === ',') {
+        event.preventDefault();
+        const settingsButton = document.querySelector('[data-settings-trigger]') as HTMLButtonElement;
+        if (settingsButton) {
+          settingsButton.click();
+        }
+      }
+
+      // Escape: Clear search
+      if (event.key === 'Escape') {
+        const searchInput = document.querySelector('input[placeholder="Search files..."]') as HTMLInputElement;
+        if (searchInput && document.activeElement === searchInput) {
+          searchInput.blur();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -742,7 +805,7 @@ export default class AccountList extends LightningElement {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[280px] p-0">
-            <div className="h-full bg-muted/30 overflow-hidden">
+            <div className="h-full bg-muted/30 overflow-hidden custom-scrollbar">
               <FileTree
                 data={sampleData}
                 onSelect={handleFileSelect}
@@ -767,11 +830,11 @@ export default class AccountList extends LightningElement {
             maxSize={30}
             collapsible
             collapsedSize={0}
-            onCollapse={() => setIsSidebarCollapsed(true)}
-            onExpand={() => setIsSidebarCollapsed(false)}
+            onCollapse={() => handleSidebarCollapse(true)}
+            onExpand={() => handleSidebarCollapse(false)}
             className="hidden md:block border-r"
           >
-            <div className="h-full bg-muted/30 overflow-hidden">
+            <div className="h-full bg-muted/30 overflow-hidden custom-scrollbar">
               <FileTree
                 data={sampleData}
                 onSelect={handleFileSelect}
