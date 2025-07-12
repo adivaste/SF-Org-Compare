@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Menu, Settings, GitCompare, ChevronDown, ChevronRight, FileIcon, FolderIcon, Code, FileText, Palette, Zap } from 'lucide-react';
+import { Menu, Settings, GitCompare, ChevronDown, ChevronRight, FileIcon, FolderIcon, Code, FileText, Palette, Zap, Search, Regex, CaseSensitive, WholeWord, FileSearch, Filter, ListTree, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GitDiffViewer } from '@/components/GitDiffViewer';
 
@@ -33,7 +33,7 @@ interface FileNode {
   type: 'file' | 'directory';
   path: string;
   children?: FileNode[];
-  status?: 'modified' | 'added' | 'deleted';
+  status?: 'matched' | 'modified' | 'only_in_source' | 'only_in_target' | 'comparison_in_progress' | 'comparison_failed';
 }
 
 interface FileContent {
@@ -48,6 +48,7 @@ const sampleData: FileNode[] = [
     name: 'force-app',
     type: 'directory',
     path: '/force-app',
+    status: 'comparison_in_progress',
     children: [
       {
         name: 'main',
@@ -80,7 +81,7 @@ const sampleData: FileNode[] = [
                     name: 'OpportunityService.cls',
                     type: 'file',
                     path: '/force-app/main/default/classes/OpportunityService.cls',
-                    status: 'added'
+                    status: 'only_in_target'
                   }
                 ]
               },
@@ -93,7 +94,7 @@ const sampleData: FileNode[] = [
                     name: 'AccountTrigger.trigger',
                     type: 'file',
                     path: '/force-app/main/default/triggers/AccountTrigger.trigger',
-                    status: 'added'
+                    status: 'only_in_target'
                   },
                   {
                     name: 'ContactTrigger.trigger',
@@ -123,7 +124,7 @@ const sampleData: FileNode[] = [
                         name: 'accountList.html',
                         type: 'file',
                         path: '/force-app/main/default/lwc/accountList/accountList.html',
-                        status: 'added'
+                        status: 'only_in_target'
                       },
                       {
                         name: 'accountList.css',
@@ -150,7 +151,7 @@ const sampleData: FileNode[] = [
                     name: 'ContactList.page',
                     type: 'file',
                     path: '/force-app/main/default/pages/ContactList.page',
-                    status: 'added'
+                    status: 'only_in_target'
                   }
                 ]
               },
@@ -180,19 +181,33 @@ const sampleData: FileNode[] = [
             name: 'StringUtils.cls',
             type: 'file',
             path: '/force-app/utils/StringUtils.cls',
-            status: 'deleted'
+            status: 'only_in_source'
           },
           {
             name: 'ValidationUtils.cls',
             type: 'file',
             path: '/force-app/utils/ValidationUtils.cls',
-            status: 'added'
+            status: 'only_in_target'
           }
         ]
       }
     ]
   }
 ];
+
+// Helper function to find a node by path
+function findNodeByPath(node: FileNode, path: string): FileNode | null {
+  if (node.path === path) {
+    return node;
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      const found = findNodeByPath(child, path);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 function FileTree({ 
   data, 
@@ -209,6 +224,15 @@ function FileTree({
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchOptions, setSearchOptions] = useState({
+    useRegex: false,
+    caseSensitive: false,
+    wholeWord: false,
+    searchInContent: false
+  });
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -247,7 +271,29 @@ function FileTree({
     if (!searchTerm) return nodes;
     
     return nodes.filter(node => {
-      const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase());
+      let matchesSearch = false;
+      const searchText = searchTerm.toLowerCase();
+      const nodeName = node.name.toLowerCase();
+      
+      if (searchOptions.useRegex) {
+        try {
+          const regex = new RegExp(searchTerm, searchOptions.caseSensitive ? '' : 'i');
+          matchesSearch = regex.test(node.name);
+        } catch (e) {
+          // Invalid regex, fall back to simple search
+          matchesSearch = nodeName.includes(searchText);
+        }
+      } else if (searchOptions.wholeWord) {
+        const words = nodeName.split(/[\s\-_\.]+/);
+        matchesSearch = words.some(word => 
+          searchOptions.caseSensitive ? word === searchTerm : word === searchText
+        );
+      } else {
+        matchesSearch = searchOptions.caseSensitive 
+          ? node.name.includes(searchTerm)
+          : nodeName.includes(searchText);
+      }
+      
       const hasMatchingChildren = node.children && filterNodes(node.children).length > 0;
       return matchesSearch || hasMatchingChildren;
     }).map(node => ({
@@ -261,7 +307,20 @@ function FileTree({
   const highlightText = (text: string, searchTerm: string) => {
     if (!searchTerm) return text;
     
-    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    let regex;
+    if (searchOptions.useRegex) {
+      try {
+        regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, searchOptions.caseSensitive ? 'g' : 'gi');
+      } catch (e) {
+        regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      }
+    } else if (searchOptions.wholeWord) {
+      const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      regex = new RegExp(`(\\b${escapedTerm}\\b)`, searchOptions.caseSensitive ? 'g' : 'gi');
+    } else {
+      regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, searchOptions.caseSensitive ? 'gi' : 'gi');
+    }
+    
     const parts = text.split(regex);
     
     return parts.map((part, index) => 
@@ -277,9 +336,12 @@ function FileTree({
     const isExpanded = expandedFolders.has(node.path);
     const isSelected = node.path === selectedPath;
     const statusColors = {
+      matched: 'bg-green-400',
       modified: 'bg-yellow-400',
-      added: 'bg-green-400',
-      deleted: 'bg-red-400'
+      only_in_source: 'bg-blue-400',
+      only_in_target: 'bg-orange-400',
+      comparison_in_progress: 'bg-gray-400 status-dot-comparison',
+      comparison_failed: 'bg-red-400'
     };
 
     return (
@@ -337,14 +399,67 @@ function FileTree({
         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Files
         </div>
-        <div className="px-3">
-          <input
-            type="text"
-            placeholder="Search files..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-7 px-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+        <div className="px-3 space-y-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-7 pl-7 pr-16 text-sm border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-5 w-5 p-0 hover:bg-accent",
+                  searchOptions.useRegex && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => setSearchOptions(prev => ({ ...prev, useRegex: !prev.useRegex }))}
+                title="Use regex"
+              >
+                <Regex className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-5 w-5 p-0 hover:bg-accent",
+                  searchOptions.caseSensitive && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => setSearchOptions(prev => ({ ...prev, caseSensitive: !prev.caseSensitive }))}
+                title="Case sensitive"
+              >
+                <CaseSensitive className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-5 w-5 p-0 hover:bg-accent",
+                  searchOptions.wholeWord && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => setSearchOptions(prev => ({ ...prev, wholeWord: !prev.wholeWord }))}
+                title="Match whole word"
+              >
+                <WholeWord className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-5 w-5 p-0 hover:bg-accent",
+                  searchOptions.searchInContent && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => setSearchOptions(prev => ({ ...prev, searchInContent: !prev.searchInContent }))}
+                title="Search in content"
+              >
+                <FileSearch className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
       {filteredData.map(node => renderNode(node))}
@@ -892,6 +1007,12 @@ export default class AccountList extends LightningElement {
                     originalCode={fileContent.original}
                     modifiedCode={fileContent.modified}
                     language={fileContent.language}
+                    notPresentInSource={!!(selectedFile && sampleData.some(node => 
+                      findNodeByPath(node, selectedFile)?.status === 'only_in_target'
+                    ))}
+                    notPresentInTarget={!!(selectedFile && sampleData.some(node => 
+                      findNodeByPath(node, selectedFile)?.status === 'only_in_source'
+                    ))}
                     options={{
                       fontSize: settings.fontSize,
                       showDiffOnly: settings.showDiffOnly,

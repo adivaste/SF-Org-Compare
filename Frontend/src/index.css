@@ -89,7 +89,7 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:horizontal {
-  background: red;
+  background: transparent;
   border-radius: 3px;
   transition: background-color 0.2s ease;
 }
@@ -107,7 +107,17 @@ body {
   background: hsl(var(--background));
   backdrop-filter: blur(8px);
   border-bottom: 1px solid hsl(var(--border));
-  /* box-shadow: 0 0px 3px rgba(0, 0, 0, 0.1); */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Status dot animations */
+@keyframes comparison-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.status-dot-comparison {
+  animation: comparison-pulse 2s ease-in-out infinite;
 }
 
 /* Dark mode adjustments for scrollbars */

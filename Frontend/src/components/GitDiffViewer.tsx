@@ -9,6 +9,8 @@ interface GitDiffViewerProps {
   modifiedCode: string;
   language?: string;
   className?: string;
+  notPresentInSource?: boolean;
+  notPresentInTarget?: boolean;
   options?: {
     fontSize?: number;
     showDiffOnly?: boolean;
@@ -48,6 +50,8 @@ export function GitDiffViewer({
   modifiedCode,
   language = 'apex',
   className,
+  notPresentInSource = false,
+  notPresentInTarget = false,
   options = {}
 }: GitDiffViewerProps) {
   const lang = languageMap[language.toLowerCase()] || 'plaintext';
@@ -113,6 +117,24 @@ export function GitDiffViewer({
 
   return (
     <div className={cn("h-full w-full overflow-auto pb-8 custom-scrollbar", className)}>
+      {(notPresentInSource || notPresentInTarget) && (
+        <div className="sticky top-0 z-10 bg-muted/50 backdrop-blur-sm border-b p-3">
+          <div className="flex items-center gap-4 text-sm">
+            {notPresentInSource && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="font-medium">Not present in source</span>
+              </div>
+            )}
+            {notPresentInTarget && (
+              <div className="flex items-center gap-2 text-orange-600">
+                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                <span className="font-medium">Not present in target</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <DiffView
         diffFile={diffFile}
         diffViewFontSize={options.fontSize || 14}
