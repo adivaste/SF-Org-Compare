@@ -1,69 +1,113 @@
-# React + TypeScript + Vite
+# Salesforce Code Compare - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, feature-rich code comparison tool built with React and TypeScript, specifically designed for Salesforce development.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🚀 **Enhanced Diff Viewer**
+- **GitHub-style diff visualization** using `@git-diff-view/react`
+- **Split and unified view modes**
+- **Syntax highlighting** with full context support
+- **Light and dark themes**
+- **Virtual scrolling** for better performance with large files
+- **Line wrapping** support
+- **Widget system** for adding custom content to diff lines
+- **Extend data** for additional context on specific lines
 
-## Expanding the ESLint configuration
+### 🎨 **Customization Options**
+- **Font size** adjustment (10-20px)
+- **Theme switching** (Light/Dark)
+- **View mode** (Side-by-side/Unified)
+- **Syntax highlighting** toggle
+- **Line wrapping** toggle
+- **Widget system** toggle
+- **Extend data** toggle
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📁 **File Management**
+- **Tree view** file browser
+- **File status indicators** (Modified, Added, Deleted)
+- **Collapsible folders**
+- **Responsive design** with mobile support
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 🎯 **Salesforce Support**
+- **Apex class** syntax highlighting
+- **Trigger** syntax highlighting
+- **SOQL** query highlighting
+- **Visualforce** page support
+- **Lightning Web Components** support
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+- Node.js 18+ 
+- npm or pnpm
+
+### Installation
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Development
+```bash
+npm run dev
 ```
+
+The application will be available at `http://localhost:5173` (or the next available port).
+
+## Usage
+
+### Basic Diff Viewing
+1. **Select a file** from the sidebar
+2. **View differences** in the main panel
+3. **Toggle settings** using the gear icon
+
+### Advanced Features
+
+#### Widgets
+Enable widgets to add custom content to specific diff lines:
+- Click the "+" button on any line
+- Widgets can contain comments, annotations, or any custom content
+- Perfect for code review workflows
+
+#### Extend Data
+Enable extend data to show additional context:
+- Yellow highlighted sections show additional information
+- Useful for showing related changes or context
+- Can be customized for your specific needs
+
+#### Theme Switching
+- **Light theme**: Clean, GitHub-like appearance
+- **Dark theme**: Easy on the eyes for extended use
+
+## Technology Stack
+
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **@git-diff-view/react** for diff visualization
+- **Lucide React** for icons
+- **Radix UI** for accessible components
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── ui/           # Reusable UI components
+│   └── GitDiffViewer.tsx  # Main diff viewer component
+├── lib/
+│   └── utils.ts      # Utility functions
+└── App.tsx           # Main application component
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.

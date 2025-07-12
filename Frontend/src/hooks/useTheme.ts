@@ -1,29 +1,51 @@
 import { useState, useEffect } from 'react';
 
-export const useTheme = () => {
+type Theme = 'light' | 'dark' | 'system';
+
+export function useTheme() {
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem('theme') as Theme) || 'system'
+  );
+
   const [isDarkTheme, setIsDarkTheme] = useState(false);
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkTheme(isDark);
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
 
-    // Create a mutation observer to watch for theme changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          const isDark = document.documentElement.classList.contains('dark');
-          setIsDarkTheme(isDark);
-        }
-      });
-    });
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      root.classList.add(systemTheme);
+      setIsDarkTheme(systemTheme === 'dark');
+    } else {
+      root.classList.add(theme);
+      setIsDarkTheme(theme === 'dark');
+    }
 
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
-    return () => observer.disconnect();
-  }, []);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = () => {
+      if (theme === 'system') {
+        const systemTheme = mediaQuery.matches ? 'dark' : 'light';
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(systemTheme);
+        setIsDarkTheme(systemTheme === 'dark');
+      }
+    };
 
-  return { isDarkTheme };
-}; 
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
+  return {
+    theme,
+    setTheme,
+    isDarkTheme,
+  };
+} 

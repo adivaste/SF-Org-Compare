@@ -1,21 +1,71 @@
-import { FolderIcon, DocumentIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
-import { cn } from '../utils/styles';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ChevronRight, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { getFileIcon, getFileExtension } from "@/lib/utils";
 
 interface FileNode {
   name: string;
   type: 'file' | 'directory';
   children?: FileNode[];
   path: string;
+  metadata?: {
+    status?: 'modified' | 'added' | 'deleted' | 'renamed';
+    changes?: {
+      additions: number;
+      deletions: number;
+    };
+    apiVersion?: string;
+    lastModifiedBy?: string;
+    lastModifiedDate?: string;
+    type?: 'ApexClass' | 'ApexTrigger' | 'VisualforcePage' | 'CustomObject' | 'Layout' | string;
+  };
 }
 
 interface FileTreeProps {
   data: FileNode[];
   onFileSelect: (path: string) => void;
   selectedFile?: string;
+  className?: string;
 }
 
-const FileTreeNode = ({ node, level = 0, onFileSelect, selectedFile }: { 
+const statusColors = {
+  modified: {
+    bg: "bg-yellow-500/10",
+    text: "text-yellow-500",
+    border: "border-yellow-500/20",
+  },
+  added: {
+    bg: "bg-green-500/10",
+    text: "text-green-500",
+    border: "border-green-500/20",
+  },
+  deleted: {
+    bg: "bg-red-500/10",
+    text: "text-red-500",
+    border: "border-red-500/20",
+  },
+  renamed: {
+    bg: "bg-blue-500/10",
+    text: "text-blue-500",
+    border: "border-blue-500/20",
+  },
+} as const;
+
+const FileTreeNode = ({ 
+  node, 
+  level = 0, 
+  onFileSelect, 
+  selectedFile 
+}: { 
   node: FileNode; 
   level?: number; 
   onFileSelect: (path: string) => void;
@@ -24,72 +74,114 @@ const FileTreeNode = ({ node, level = 0, onFileSelect, selectedFile }: {
   const [isOpen, setIsOpen] = useState(false);
   const paddingLeft = `${level * 1}rem`;
   const isSelected = selectedFile === node.path;
-
-  const toggleOpen = () => {
-    if (node.type === 'directory') {
-      setIsOpen(!isOpen);
-    }
-  };
+  const status = node.metadata?.status;
+  const statusColor = status ? statusColors[status] : undefined;
+  const fileIcon = node.type === 'file' ? getFileIcon(node.path) : null;
+  const fileExt = node.type === 'file' ? getFileExtension(node.path) : null;
 
   return (
-    <div>
-      <div
-        className={cn(
-          'flex items-center py-1.5 px-3 cursor-pointer select-none',
-          'hover:bg-gray-100 dark:hover:bg-gray-700/50',
-          'transition-colors duration-100',
-          isSelected && 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
-        )}
-        style={{ paddingLeft }}
-        onClick={() => {
-          if (node.type === 'file') {
-            onFileSelect(node.path);
-          } else {
-            toggleOpen();
-          }
-        }}
-      >
-        <div className="flex items-center flex-1 min-w-0">
-          {node.type === 'directory' && (
-            <div className="w-4 h-4 mr-1 flex-shrink-0">
-              {isOpen ? (
-                <ChevronDownIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-              ) : (
-                <ChevronRightIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+    <TooltipProvider>
+      <div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full h-7 px-2 justify-start gap-2 relative group",
+                isSelected && "bg-accent text-accent-foreground",
+                node.type === "directory" && isOpen && "bg-muted",
+                status && statusColor?.bg
+              )}
+              style={{ paddingLeft }}
+              onClick={() => {
+                if (node.type === "file") {
+                  onFileSelect(node.path);
+                } else {
+                  setIsOpen(!isOpen);
+                }
+              }}
+            >
+              {node.type === "directory" && (
+                <div className="shrink-0">
+                  {isOpen ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
+              )}
+              <div className="flex items-center gap-2 min-w-0">
+                {fileIcon && (
+                  <span className="shrink-0 text-xs" aria-hidden="true">
+                    {fileIcon}
+                  </span>
+                )}
+                <span className="truncate flex-1 text-xs">
+                  {node.name}
+                </span>
+                {status && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-4 text-[10px] font-normal px-1 ml-auto",
+                      statusColor?.text,
+                      statusColor?.border
+                    )}
+                  >
+                    {status}
+                  </Badge>
+                )}
+                {node.metadata?.changes && (
+                  <div className="text-[10px] tabular-nums whitespace-nowrap">
+                    <span className="text-green-500">+{node.metadata.changes.additions}</span>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="text-red-500">-{node.metadata.changes.deletions}</span>
+                  </div>
+                )}
+              </div>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="start" className="max-w-[300px]">
+            <div className="text-xs space-y-1">
+              <p className="font-medium">{node.name}</p>
+              {node.metadata?.type && (
+                <p className="text-muted-foreground">Type: {node.metadata.type}</p>
+              )}
+              {node.metadata?.apiVersion && (
+                <p className="text-muted-foreground">API: v{node.metadata.apiVersion}</p>
+              )}
+              {node.metadata?.lastModifiedBy && (
+                <p className="text-muted-foreground">Modified by: {node.metadata.lastModifiedBy}</p>
+              )}
+              {node.metadata?.lastModifiedDate && (
+                <p className="text-muted-foreground">
+                  Modified: {new Date(node.metadata.lastModifiedDate).toLocaleString()}
+                </p>
               )}
             </div>
-          )}
-          {node.type === 'directory' ? (
-            <FolderIcon className={cn(
-              'w-4 h-4 mr-2 flex-shrink-0',
-              isOpen ? 'text-indigo-400' : 'text-gray-400 dark:text-gray-500'
-            )} />
-          ) : (
-            <DocumentIcon className="w-4 h-4 mr-2 flex-shrink-0 text-gray-400 dark:text-gray-500" />
-          )}
-          <span className="text-sm truncate">{node.name}</span>
-        </div>
+          </TooltipContent>
+        </Tooltip>
+        {node.type === "directory" && isOpen && node.children && (
+          <div>
+            {node.children.map((child, index) => (
+              <FileTreeNode
+                key={`${child.path}-${index}`}
+                node={child}
+                level={level + 1}
+                onFileSelect={onFileSelect}
+                selectedFile={selectedFile}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      {node.type === 'directory' && isOpen && node.children && (
-        <div>
-          {node.children.map((child, index) => (
-            <FileTreeNode
-              key={`${child.path}-${index}`}
-              node={child}
-              level={level + 1}
-              onFileSelect={onFileSelect}
-              selectedFile={selectedFile}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   );
 };
 
-const FileTree = ({ data, onFileSelect, selectedFile }: FileTreeProps) => {
+export function FileTree({ data, onFileSelect, selectedFile, className }: FileTreeProps) {
   return (
-    <div className="h-full overflow-auto bg-white dark:bg-gray-800">
+    <ScrollArea className={cn("h-full py-2 pr-2", className)}>
       {data.map((node, index) => (
         <FileTreeNode
           key={`${node.path}-${index}`}
@@ -98,8 +190,6 @@ const FileTree = ({ data, onFileSelect, selectedFile }: FileTreeProps) => {
           selectedFile={selectedFile}
         />
       ))}
-    </div>
+    </ScrollArea>
   );
-};
-
-export default FileTree; 
+} 
