@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/git")
+@CrossOrigin(origins = "http://localhost:5173")
 public class GitDiffController {
 
     private final GitDiffService diffService;

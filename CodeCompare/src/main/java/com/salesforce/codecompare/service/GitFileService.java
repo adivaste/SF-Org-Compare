@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-
-
 @Service
 public class GitFileService {
 
@@ -61,7 +59,10 @@ public class GitFileService {
                 tw.setRecursive(true);
                 tw.setFilter(PathFilter.create(filePath));
 
-                if (!tw.next()) throw new Exception("File not found: " + filePath);
+                Boolean isFilePresent = tw.next();
+                if (!isFilePresent) {
+                    return null;
+                }
 
                 ObjectId blobId = tw.getObjectId(0);
                 ObjectLoader loader = repo.open(blobId);

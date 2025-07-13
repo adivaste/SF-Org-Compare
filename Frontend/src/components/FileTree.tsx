@@ -10,7 +10,7 @@ import {
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { getFileIcon, getFileExtension } from "@/lib/utils";
+import { getFileIcon } from "@/lib/utils";
 
 interface FileNode {
   name: string;
@@ -58,26 +58,62 @@ const statusColors = {
     text: "text-blue-500",
     border: "border-blue-500/20",
   },
+  onlyInSource: {
+    bg: "bg-blue-500/10",
+    text: "text-blue-500",
+    border: "border-blue-500/20",
+  },
+  onlyInTarget: {
+    bg: "bg-orange-500/10",
+    text: "text-orange-500",
+    border: "border-orange-500/20",
+  },
 } as const;
+
+export function FileTree({ data, onFileSelect, selectedFile, className }: FileTreeProps) {
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+
+  const handleToggle = (path: string) => {
+    setExpandedFolders(prev => ({ ...prev, [path]: !prev[path] }));
+  };
+
+  return (
+    <ScrollArea className={cn("h-full py-2 pr-2", className)}>
+      {data.map((node, index) => (
+        <FileTreeNode
+          key={`${node.path}-${index}`}
+          node={node}
+          onFileSelect={onFileSelect}
+          selectedFile={selectedFile}
+          expandedFolders={expandedFolders}
+          onToggle={handleToggle}
+        />
+      ))}
+    </ScrollArea>
+  );
+}
 
 const FileTreeNode = ({ 
   node, 
   level = 0, 
   onFileSelect, 
-  selectedFile 
+  selectedFile,
+  expandedFolders,
+  onToggle
 }: { 
   node: FileNode; 
   level?: number; 
   onFileSelect: (path: string) => void;
   selectedFile?: string;
+  expandedFolders: Record<string, boolean>;
+  onToggle: (path: string) => void;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const isOpen = expandedFolders[node.path];
   const paddingLeft = `${level * 1}rem`;
   const isSelected = selectedFile === node.path;
   const status = node.metadata?.status;
   const statusColor = status ? statusColors[status] : undefined;
   const fileIcon = node.type === 'file' ? getFileIcon(node.path) : null;
-  const fileExt = node.type === 'file' ? getFileExtension(node.path) : null;
 
   return (
     <TooltipProvider>
@@ -97,7 +133,7 @@ const FileTreeNode = ({
                 if (node.type === "file") {
                   onFileSelect(node.path);
                 } else {
-                  setIsOpen(!isOpen);
+                  onToggle(node.path);
                 }
               }}
             >
@@ -170,6 +206,8 @@ const FileTreeNode = ({
                 level={level + 1}
                 onFileSelect={onFileSelect}
                 selectedFile={selectedFile}
+                expandedFolders={expandedFolders}
+                onToggle={onToggle}
               />
             ))}
           </div>
@@ -177,19 +215,4 @@ const FileTreeNode = ({
       </div>
     </TooltipProvider>
   );
-};
-
-export function FileTree({ data, onFileSelect, selectedFile, className }: FileTreeProps) {
-  return (
-    <ScrollArea className={cn("h-full py-2 pr-2", className)}>
-      {data.map((node, index) => (
-        <FileTreeNode
-          key={`${node.path}-${index}`}
-          node={node}
-          onFileSelect={onFileSelect}
-          selectedFile={selectedFile}
-        />
-      ))}
-    </ScrollArea>
-  );
-} 
+}; 

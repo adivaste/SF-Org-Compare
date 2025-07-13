@@ -32,9 +32,9 @@ public class GitDiffService {
             if (blob1 != null && blob2 != null) {
                 status = blob1.equals(blob2) ? "matched" : "modified";
             } else if (blob1 != null) {
-                status = "only-in-source";
+                status = "onlyInSource";
             } else {
-                status = "only-in-target";
+                status = "onlyInTarget";
             }
 
             String fileName = new File(path).getName();

@@ -9,7 +9,7 @@ import {
 import { useTheme } from "@/hooks/useTheme";
 
 export default function ThemeToggle() {
-  const { isDarkTheme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
 
   return (
     <DropdownMenu>
