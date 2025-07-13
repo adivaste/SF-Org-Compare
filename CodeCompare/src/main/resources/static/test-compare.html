@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Code Compare - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Salesforce Code Compare - Test Interface</h1>
+    
+    <div class="container">
+        <h2>Test Configuration</h2>
+        <div class="form-group">
+            <label for="orgPath">Org Directory Path:</label>
+            <input type="text" id="orgPath" value="E:\Web Developement\Salesforce-Code-Compare\CodeCompare\orgs\test-org" placeholder="Enter org directory path">
+        </div>
+        <div class="form-group">
+            <label for="sourceBranch">Source Branch:</label>
+            <select id="sourceBranch">
+                <option value="Sandbox">Sandbox</option>
+                <option value="UAT">UAT</option>
+                <option value="Prod">Prod</option>
+                <option value="main">main</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="targetBranch">Target Branch:</label>
+            <select id="targetBranch">
+                <option value="main">main</option>
+                <option value="Sandbox">Sandbox</option>
+                <option value="UAT">UAT</option>
+                <option value="Prod">Prod</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filePath">File Path (optional):</label>
+            <input type="text" id="filePath" placeholder="Enter specific file path for diff">
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Test Endpoints</h2>
+        <button onclick="testStructure()">Test Structure Comparison</button>
+        <button onclick="testUnifiedStructure()">Test Unified Structure</button>
+        <button onclick="testHierarchicalUnion()">Test Hierarchical Union</button>
+        <button onclick="testHierarchicalUnionJGit()">Test JGit Hierarchical Union</button>
+        <button onclick="testDiff()">Test Diff</button>
+        <button onclick="testContent()">Test File Content</button>
+        <button onclick="testComprehensive()">Test Comprehensive Compare</button>
+    </div>
+
+    <div class="container">
+        <h2>Git Structure Endpoints (JGit)</h2>
+        <button onclick="testGitDirectory()">Test Git Directory</button>
+        <button onclick="testGitForceApp()">Test Git Force-App</button>
+        <button onclick="testGitCompare()">Test Git Compare</button>
+        <button onclick="testGitTree()">Test Git Tree</button>
+    </div>
+
+    <div class="container">
+        <h2>Results</h2>
+        <div id="results" class="result">Click a test button to see results...</div>
+    </div>
+
+    <script>
+        function getBaseUrl() {
+            return window.location.origin;
+        }
+
+        function showResult(data, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            const className = isError ? 'result error' : 'result success';
+            resultsDiv.className = className;
+            resultsDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function getParams() {
+            return {
+                orgPath: document.getElementById('orgPath').value,
+                sourceBranch: document.getElementById('sourceBranch').value,
+                targetBranch: document.getElementById('targetBranch').value,
+                filePath: document.getElementById('filePath').value
+            };
+        }
+
+        async function testStructure() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/structure?orgPath=${encodeURIComponent(params.orgPath)}&sourceBranch=${params.sourceBranch}&targetBranch=${params.targetBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testUnifiedStructure() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/unified-structure?orgPath=${encodeURIComponent(params.orgPath)}&sourceBranch=${params.sourceBranch}&targetBranch=${params.targetBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testHierarchicalUnion() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/hierarchical-union?orgPath=${encodeURIComponent(params.orgPath)}&sourceBranch=${params.sourceBranch}&targetBranch=${params.targetBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testHierarchicalUnionJGit() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/hierarchical-union-jgit?orgPath=${encodeURIComponent(params.orgPath)}&sourceBranch=${params.sourceBranch}&targetBranch=${params.targetBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testDiff() {
+            const params = getParams();
+            const url = new URL(`${getBaseUrl()}/api/compare/diff`);
+            url.searchParams.append('orgPath', params.orgPath);
+            url.searchParams.append('sourceBranch', params.sourceBranch);
+            url.searchParams.append('targetBranch', params.targetBranch);
+            if (params.filePath) {
+                url.searchParams.append('filePath', params.filePath);
+            }
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testContent() {
+            const params = getParams();
+            if (!params.filePath) {
+                showResult({ error: 'File path is required for content test' }, true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/content?orgPath=${encodeURIComponent(params.orgPath)}&branch=${params.sourceBranch}&filePath=${encodeURIComponent(params.filePath)}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testComprehensive() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/compare/comprehensive`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        orgPath: params.orgPath,
+                        sourceBranch: params.sourceBranch,
+                        targetBranch: params.targetBranch
+                    })
+                });
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        // Git Structure endpoints
+        async function testGitDirectory() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/git-structure/directory?repoPath=${encodeURIComponent(params.orgPath)}&branch=${params.sourceBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testGitForceApp() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/git-structure/force-app?repoPath=${encodeURIComponent(params.orgPath)}&branch=${params.sourceBranch}`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testGitCompare() {
+            const params = getParams();
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/git-structure/compare?repoPath=${encodeURIComponent(params.orgPath)}&sourceBranch=${params.sourceBranch}&targetBranch=${params.targetBranch}&forceAppOnly=true`);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testGitTree() {
+            const params = getParams();
+            try {
+                const url = new URL(`${getBaseUrl()}/api/git-structure/tree`);
+                url.searchParams.append('repoPath', params.orgPath);
+                url.searchParams.append('branch', params.sourceBranch);
+                if (params.filePath) {
+                    url.searchParams.append('path', params.filePath);
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                showResult(data, !response.ok);
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html> 
