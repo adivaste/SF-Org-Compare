@@ -61,8 +61,8 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -70,36 +70,52 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
+  background: rgba(156, 163, 175, 1);
+  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+/* Show scrollbar only when scrolling or hovering */
+.custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb,
+.custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:horizontal {
+  background: rgba(156, 163, 175, 0.2);
+  transform: scale(1);
+}
+
+.custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:horizontal:hover {
+  background: rgba(156, 163, 175, 0.4);
+  transform: scale(1.1);
+}
+
+/* Show scrollbar when actively scrolling with animation */
+.custom-scrollbar.scrolling::-webkit-scrollbar-thumb,
+.custom-scrollbar.scrolling::-webkit-scrollbar-thumb:horizontal {
   background: rgba(156, 163, 175, 0.3);
+  transform: scale(1.05);
+  animation: scrollbarPulse 0.3s ease-out;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
+@keyframes scrollbarPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
 }
 
 /* Horizontal scrollbar specific styles */
 .custom-scrollbar::-webkit-scrollbar:horizontal {
-  height: 6px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:horizontal {
   background: transparent;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.custom-scrollbar:hover::-webkit-scrollbar-thumb:horizontal {
-  background: rgba(156, 163, 175, 0.3);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:horizontal:hover {
-  background: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Sticky header background */
@@ -120,21 +136,57 @@ body {
   animation: comparison-pulse 2s ease-in-out infinite;
 }
 
-/* Dark mode adjustments for scrollbars */
-.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+/* Dark mode scrollbar styles */
+.dark .custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb,
+.dark .custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:horizontal {
+  background: rgba(156, 163, 175, 0.3);
+}
+
+.dark .custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:hover,
+.dark .custom-scrollbar:is(:hover, :focus-within)::-webkit-scrollbar-thumb:horizontal:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+.dark .custom-scrollbar.scrolling::-webkit-scrollbar-thumb,
+.dark .custom-scrollbar.scrolling::-webkit-scrollbar-thumb:horizontal {
   background: rgba(156, 163, 175, 0.4);
 }
 
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.6);
+/* Syntax highlighting background color override */
+.shiki {
+  background-color: hsl(var(--background)) !important;
 }
 
-.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb:horizontal {
-  background: rgba(156, 163, 175, 0.4);
+.shiki * {
+  background-color: transparent !important;
 }
 
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:horizontal:hover {
-  background: rgba(156, 163, 175, 0.6);
+/* Ensure code blocks in single file view use theme background */
+.shiki[style*="background"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* Override any inline background styles for syntax highlighting */
+.shiki[style*="background-color"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* Dark mode specific overrides */
+.dark .shiki {
+  background-color: hsl(var(--background)) !important;
+}
+
+.dark .shiki * {
+  background-color: transparent !important;
+}
+
+/* Light mode specific overrides */
+.light .shiki {
+  background-color: hsl(var(--background)) !important;
+}
+
+.light .shiki * {
+  background-color: transparent !important;
 }
 
 
@@ -183,7 +235,7 @@ body {
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
+    --border: 0 0% 14.9%;   
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;

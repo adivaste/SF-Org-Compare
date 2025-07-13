@@ -63,6 +63,62 @@ module.exports = {
   				'Monaco',
   				'Courier New',
   				'monospace'
+  			],
+  			'funnel': [
+  				'"Funnel Display"',
+  				'serif'
+  			],
+  			'montserrat': [
+  				'Montserrat',
+  				'sans-serif'
+  			],
+  			'poppins': [
+  				'Poppins',
+  				'sans-serif'
+  			],
+  			'rubik': [
+  				'Rubik',
+  				'sans-serif'
+  			],
+  			'dm-sans': [
+  				'"DM Sans"',
+  				'sans-serif'
+  			],
+  			'work-sans': [
+  				'"Work Sans"',
+  				'sans-serif'
+  			],
+  			'barlow': [
+  				'Barlow',
+  				'sans-serif'
+  			],
+  			'figtree': [
+  				'Figtree',
+  				'sans-serif'
+  			],
+  			'jakarta': [
+  				'"Plus Jakarta Sans"',
+  				'sans-serif'
+  			],
+  			'sora': [
+  				'Sora',
+  				'sans-serif'
+  			],
+  			'bricolage': [
+  				'"Bricolage Grotesque"',
+  				'sans-serif'
+  			],
+  			'almarai': [
+  				'Almarai',
+  				'sans-serif'
+  			],
+  			'questrial': [
+  				'Questrial',
+  				'sans-serif'
+  			],
+  			'inter': [
+  				'Inter',
+  				'sans-serif'
   			]
   		},
   		borderRadius: {
