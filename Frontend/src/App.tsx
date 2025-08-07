@@ -1107,14 +1107,14 @@ function AppContent() {
   const [showHeader, setShowHeader] = useState<boolean>(true);
 
   // Organization and branch selection
-  const [selectedOrg, setSelectedOrg] = useState<string>('Shraddha-SB');
-  const [selectedSourceBranch, setSelectedSourceBranch] = useState<string>('Sandbox');
-  const [selectedTargetBranch, setSelectedTargetBranch] = useState<string>('UAT');
+  const [selectedOrg, setSelectedOrg] = useState<string>('CentralizedOrgRepo');
+  const [selectedSourceBranch, setSelectedSourceBranch] = useState<string>('Shraddha-SB');
+  const [selectedTargetBranch, setSelectedTargetBranch] = useState<string>('RBConstruction-SB');
   const [showBranchSelector, setShowBranchSelector] = useState<boolean>(false);
 
   // Dummy options for organizations and branches
   const organizations = [
-    'Shraddha-SB',
+    'CentralizedOrgRepo',
     'Dev-Org',
     'Test-Org',
     'Production-Org',
@@ -1122,6 +1122,9 @@ function AppContent() {
   ];
 
   const branches = [
+    'Shraddha-SB',
+    'RBConstruction-SB',
+    'master',
     'Sandbox',
     'UAT',
     'Development',

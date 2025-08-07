@@ -24,7 +24,7 @@ public class GitDiffController {
 
     private final GitDiffService diffService;
     private final GitFileService fileService;
-    private final String repoBasePath = "E:\\Work\\Exceller-Tech\\Shraddha";
+    private final String repoBasePath = "E:\\Work\\Exceller-Tech\\gitCompareRoot";
 
     public GitDiffController(GitDiffService diffService, GitFileService fileService) {
         this.diffService = diffService;
